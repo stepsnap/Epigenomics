@@ -27,8 +27,8 @@ head -1 metadata.tsv | awk 'BEGIN{FS=OFS="\t"}{for (i=1;i<=NF;i++){print $i, i}}
 
 #As we did for the ChiP-seq analyses, we first download the files in the correspondinf folders, bigBed peak calling files:
 
-mkdir analyses
-cd analyses
+mkdir analysis
+cd analysis
 
 grep -F ATAC-seq ../metadata.tsv |\
 grep -F "bigBed_narrowPeak" metadata.tsv |\
@@ -47,7 +47,7 @@ done
 
 for file_type in bigBed; do
 # retrieve original MD5 hash from the metadata
-  ../bin/selectRows.sh <(cut -f1 analyses/"$file_type".*.ids.txt) metadata.tsv | cut -f1,46 > data/"$file_type".files/md5sum.txt
+  ../bin/selectRows.sh <(cut -f1 analysis/"$file_type".*.ids.txt) metadata.tsv | cut -f1,46 > data/"$file_type".files/md5sum.txt
 
 # compute MD5 hash on the downloaded files
   cat data/bigBed.files/md5sum.txt |\
@@ -92,32 +92,32 @@ awk 'BEGIN{FS=OFS="\t"}$1!="chrM"{$2=($2-1); print $0}' > annotation/gencode.v24
 mkdir data/bed.files
 cd data/bed.files
 
-cut -f1 analyses/bigBed.peaks.ids.txt |\
+cut -f1 analysis/bigBed.peaks.ids.txt |\
 while read filename; do
 bigBedToBed data/bigBed.files/"$filename".bigBed data/bed.files/"$filename".bed
 done
 
 #Retrieve genes with peaks at the promoter region in each tissue.
 
-mkdir analyses/bigBed.peaks.ids.txt
-cd analyses/bigBed.peaks.ids.txt
+mkdir analysis/bigBed.peaks.ids.txt
+cd analysis/bigBed.peaks.ids.txt
 
-cut -f-2 analyses/bigBed.peaks.ids.txt |\
+cut -f-2 analysis/bigBed.peaks.ids.txt |\
 while read filename tissue; do
 bedtools intersect -a annotation/gencode.v24.protein.coding.non.redundant.TSS.bed -b data/bed.files/"$filename".bed -u |\
 cut -f7 |\
-sort -u > analyses/peaks.analyses/genes.with.ATAC.peaks."$tissue".txt
+sort -u > analysis/peaks.analysis/genes.with.ATAC.peaks."$tissue".txt
 done
 
-wc -l analyses/peaks.analyses/genes.with.ATAC.peaks.*.txt
+wc -l analysis/peaks.analysis/genes.with.ATAC.peaks.*.txt
 
 #Itersection of the outer peaks with the regions of the gene body
-cut -f-2 analyses/bigBed.peaks.ids.txt |\
+cut -f-2 analysis/bigBed.peaks.ids.txt |\
 while read filename tissue; do
-bedtools intersect -a data/bed.files/"$filename".bed -b annotation/gencode.v24.protein.coding.gene.body.bed -v > analyses/peaks.analyses/peaks.outside"$tissue".bed
+bedtools intersect -a data/bed.files/"$filename".bed -b annotation/gencode.v24.protein.coding.gene.body.bed -v > analysis/peaks.analysis/peaks.outside"$tissue".bed
 done
 
-wc analyses/peaks.analyses/peaks.outside*.bed -l
+wc analysis/peaks.analysis/peaks.outside*.bed -l
 
 #######################################################################
 ################## Distal regulatory activity #########################
@@ -137,29 +137,29 @@ mkdir data/bigBed.files/H3K4me1
 
 #We will first parse the metadata file to retrieve the corresponding IDs for H3K27ac
 
-cut -f1 analyses/bigBed.H3K27ac.peaks.ids.txt |\
+cut -f1 analysis/bigBed.H3K27ac.peaks.ids.txt |\
 while read filename; do
   wget -P data/bigBed.files "https://www.encodeproject.org/files/$filename/@@download/$filename.bigBed"
 done
 
 #Now we do the same with for H3K4me1
 
-cut -f1 analyses/bigBed.H3K4me1.peaks.ids.txt |\
+cut -f1 analysis/bigBed.H3K4me1.peaks.ids.txt |\
 while read filename; do
   bigBedToBed data/bigBed.files/"$filename".bigBed data/bed.files/"$filename".bed
 done
 
 # Intersect ATAC-sec peaks first for H3K27ac:
 
-bedtools intersect -a ../ATAC-seq/analyses/peaks.analyses/peaks.outsidesigmoid_colon.bed -b data/bed.files/ENCFF872UHN.bed -u > data/bed.files/intersect_sigmoid_colon.bed
+bedtools intersect -a ../ATAC-seq/analysis/peaks.analysis/peaks.outsidesigmoid_colon.bed -b data/bed.files/ENCFF872UHN.bed -u > data/bed.files/intersect_sigmoid_colon.bed
 
-bedtools intersect -a ../ATAC-seq/analyses/peaks.analyses/peaks.outsidestomach.bed -b data/bed.files/ENCFF977LBD.bed -u > data/bed.files/intersect_stomach.bed
+bedtools intersect -a ../ATAC-seq/analysis/peaks.analysis/peaks.outsidestomach.bed -b data/bed.files/ENCFF977LBD.bed -u > data/bed.files/intersect_stomach.bed
 
 # Then for H3K4me1:
 
-bedtools intersect -a ../ATAC-seq/analyses/peaks.analyses/peaks.outsidesigmoid_colon.bed -b data/bed.files/ENCFF724ZOF.bed -u > data/bed.files/H3K4me1.intersect_sigmoid.bed
+bedtools intersect -a ../ATAC-seq/analysis/peaks.analysis/peaks.outsidesigmoid_colon.bed -b data/bed.files/ENCFF724ZOF.bed -u > data/bed.files/H3K4me1.intersect_sigmoid.bed
 
-bedtools intersect -a ../ATAC-seq/analyses/peaks.analyses/peaks.outsidestomach.bed -b data/bed.files/ENCFF844XRN.bed -u > data/bed.files/H3K4me1.intersect_stomach.bed
+bedtools intersect -a ../ATAC-seq/analysis/peaks.analysis/peaks.outsidestomach.bed -b data/bed.files/ENCFF844XRN.bed -u > data/bed.files/H3K4me1.intersect_stomach.bed
 
 # At the end for tissues:
 
